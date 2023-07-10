@@ -47,12 +47,12 @@ reminder_tasks = []
 upcoming_tasks = []
 for t in tasks:
     # if the task is done, or there are no due date and no reminders
-    if t["done"] or (t["due_date"][0] == "0" and t["reminder_dates"] is None):
+    if t["done"] or (t["due_date"][0] == "0" and t["reminders"] is None):
         continue
 
     due_date = datetime.strptime(t["due_date"], vikunja_date_frmt)
-    reminders = [datetime.strptime(d, vikunja_date_frmt) for d in t["reminder_dates"]] \
-                    if t["reminder_dates"] is not None else []
+    reminders = [datetime.strptime(d, vikunja_date_frmt) for d in t["reminders"]] \
+                    if t["reminders"] is not None else []
 
     # tasks with past reminders
     if True in [datetime.now() > d for d in reminders]:
@@ -78,8 +78,8 @@ for t in reminder_tasks + overdue_tasks + upcoming_tasks:
         message = f"Your task \'{t['title']}\' is due soon!"
 
     # clean up old reminders
-    if t["reminder_dates"] is not None:
-        t["reminder_dates"] = [d for d in t["reminder_dates"] 
+    if t["reminders"] is not None:
+        t["reminders"] = [d for d in t["reminders"] 
                                if datetime.strptime(d, vikunja_date_frmt) > datetime.now()]
         requests.post(url, headers=todo_headers, data=json.dumps(t))
 
@@ -89,9 +89,9 @@ for t in reminder_tasks + overdue_tasks + upcoming_tasks:
 
     # copy of task for setting a reminder
     t_remind = copy(t)
-    t_remind["reminder_dates"] = [] if t_remind["reminder_dates"] is None else t_remind["reminder_dates"]
+    t_remind["reminders"] = [] if t_remind["reminders"] is None else t_remind["reminders"]
     reminder_date = (datetime.now() + timedelta(hours=22)).strftime(vikunja_date_frmt)  # 22 hours from now
-    t_remind["reminder_dates"].append(reminder_date)
+    t_remind["reminders"].append(reminder_date)
 
     # filter by project here if you have multiple users
     if t["bucket_id"] == 1:
