@@ -1,0 +1,336 @@
+[
+    {
+        "id": "f6f2187d.f17ca8",
+        "type": "tab",
+        "label": "Task Notify",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "bed7f299228903d5",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "repeater",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "840",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 240,
+        "wires": [
+            [
+                "4f947c085d57a954"
+            ]
+        ]
+    },
+    {
+        "id": "4f947c085d57a954",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "Get Tasks from Vikunja",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://YOUR.VIKUNJA.SITE/api/v1/tasks/all",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [
+            {
+                "keyType": "Authorization",
+                "keyValue": "",
+                "valueType": "other",
+                "valueValue": "Bearer YOUR JWT TOKEN"
+            },
+            {
+                "keyType": "Content-Type",
+                "keyValue": "",
+                "valueType": "application/json",
+                "valueValue": ""
+            }
+        ],
+        "x": 470,
+        "y": 240,
+        "wires": [
+            [
+                "4d08a0a9d74165dd",
+                "a9696a2de8d12b4f",
+                "459899f2e60fd056"
+            ]
+        ]
+    },
+    {
+        "id": "a9696a2de8d12b4f",
+        "type": "jsonpath",
+        "z": "f6f2187d.f17ca8",
+        "expression": "$..[?(@.title=='Recycling Out')].due_date",
+        "split": false,
+        "name": "Recycling Due Date",
+        "x": 200,
+        "y": 340,
+        "wires": [
+            [
+                "b19696b7c478b7ce"
+            ]
+        ]
+    },
+    {
+        "id": "b19696b7c478b7ce",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Overdue?",
+        "func": "// Create a Date object from the payload\nvar date = new Date(msg.payload);\n// Change the payload to be a formatted Date string\n// msg.payload = date.toString();\n// Return the message so it can be sent on\n\nvar d = new Date();\n\nmsg.payload = (date < d);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 340,
+        "wires": [
+            [
+                "89c71abbdf823646"
+            ]
+        ]
+    },
+    {
+        "id": "89c71abbdf823646",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "Tell Home Assistant",
+        "method": "PUT",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://homeassistant:8123/api/webhook/YOUR WEBHOOK TRIGGER ID",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [
+            {
+                "keyType": "Content-Type",
+                "keyValue": "",
+                "valueType": "application/json",
+                "valueValue": ""
+            }
+        ],
+        "x": 590,
+        "y": 340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e26aa6c8cdfd5354",
+        "type": "zigbee2mqtt-in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "server": "b5d63f0e8dfef33d",
+        "friendly_name": "BedroomSwitch (VZM31-SN)",
+        "device_id": "0xb43a31fffe2f1949",
+        "state": "action",
+        "outputAtStartup": false,
+        "filterChanges": true,
+        "enableMultiple": false,
+        "x": 220,
+        "y": 140,
+        "wires": [
+            [
+                "1079300f61ea531b"
+            ]
+        ]
+    },
+    {
+        "id": "1079300f61ea531b",
+        "type": "switch",
+        "z": "f6f2187d.f17ca8",
+        "name": "Action?",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "config_single",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "config_double",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "config_triple",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 460,
+        "y": 140,
+        "wires": [
+            [
+                "4f947c085d57a954"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "4d08a0a9d74165dd",
+        "type": "jsonpath",
+        "z": "f6f2187d.f17ca8",
+        "expression": "$..[?(@.title=='Garbage and Yard Waste Out')].due_date",
+        "split": false,
+        "name": "Garbage Due Date",
+        "x": 190,
+        "y": 400,
+        "wires": [
+            [
+                "e5faa00d708f2d88"
+            ]
+        ]
+    },
+    {
+        "id": "e5faa00d708f2d88",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Overdue?",
+        "func": "// Create a Date object from the payload\nvar date = new Date(msg.payload);\n// Change the payload to be a formatted Date string\n// msg.payload = date.toString();\n// Return the message so it can be sent on\n\nvar d = new Date();\n\nmsg.payload = (date < d);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 400,
+        "wires": [
+            [
+                "4af45c11892d0c7e"
+            ]
+        ]
+    },
+    {
+        "id": "4af45c11892d0c7e",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "Tell Home Assistant",
+        "method": "PUT",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://homeassistant:8123/api/webhook/YOUR WEBHOOK TRIGGER",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [
+            {
+                "keyType": "Content-Type",
+                "keyValue": "",
+                "valueType": "application/json",
+                "valueValue": ""
+            }
+        ],
+        "x": 590,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "459899f2e60fd056",
+        "type": "jsonpath",
+        "z": "f6f2187d.f17ca8",
+        "expression": "$..[?(@.title=='Shave You Dummy')].due_date",
+        "split": false,
+        "name": "Shave You Dummy",
+        "x": 190,
+        "y": 460,
+        "wires": [
+            [
+                "1fa5cebb861b0c54"
+            ]
+        ]
+    },
+    {
+        "id": "1fa5cebb861b0c54",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Overdue?",
+        "func": "// Create a Date object from the payload\nvar date = new Date(msg.payload);\n// Change the payload to be a formatted Date string\n// msg.payload = date.toString();\n// Return the message so it can be sent on\n\nvar d = new Date();\n\nmsg.payload = (date < d);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 460,
+        "wires": [
+            [
+                "a728c0c3f97a983f"
+            ]
+        ]
+    },
+    {
+        "id": "a728c0c3f97a983f",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "Tell Home Assistant",
+        "method": "PUT",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://homeassistant:8123/api/webhook/YOUR HOME ASSISTANT WEBHOOK TRIGGER",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [
+            {
+                "keyType": "Content-Type",
+                "keyValue": "",
+                "valueType": "application/json",
+                "valueValue": ""
+            }
+        ],
+        "x": 590,
+        "y": 460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b5d63f0e8dfef33d",
+        "type": "zigbee2mqtt-server",
+        "name": "Z2M",
+        "host": "mosquitto",
+        "mqtt_port": "1883",
+        "mqtt_username": "YOUR MQTT USENAME",
+        "mqtt_password": "YOUR MQTT PASSWORD",
+        "mqtt_qos": "0",
+        "tls": "",
+        "usetls": false,
+        "base_topic": "zigbee2mqtt"
+    }
+]
