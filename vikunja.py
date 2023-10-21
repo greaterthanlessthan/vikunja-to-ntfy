@@ -51,17 +51,18 @@ for t in tasks:
         continue
 
     due_date = datetime.strptime(t["due_date"], vikunja_date_frmt)
-    reminders = [datetime.strptime(d, vikunja_date_frmt) for d in t["reminders"]] \
+    reminders = [datetime.strptime(d["reminder"], vikunja_date_frmt) for d in t["reminders"] ] \
                     if t["reminders"] is not None else []
 
-    # tasks with past reminders
-    if True in [datetime.now() > d for d in reminders]:
+    # tasks with recent past reminders
+    # we are just assuming the cronjob succeeds
+    if True in [datetime.now() > d and (datetime.now() - timedelta(minutes=25) < d) for d in reminders]:
         reminder_tasks.append(t)
     # future reminder exists or just checking reminders right now
     elif True in [datetime.now() < d for d in reminders] or args.just_reminders:
         continue
     # overdue taks with no future reminders
-    elif due_date < datetime.now():
+    elif due_date < datetime.now(): 
         overdue_tasks.append(t)
     # tasks due soon
     elif due_date < (datetime.now() + timedelta(hours=6)):
@@ -77,29 +78,17 @@ for t in reminder_tasks + overdue_tasks + upcoming_tasks:
     else:
         message = f"Your task \'{t['title']}\' is due soon!"
 
-    # clean up old reminders
-    if t["reminders"] is not None:
-        t["reminders"] = [d for d in t["reminders"] 
-                               if datetime.strptime(d, vikunja_date_frmt) > datetime.now()]
-        requests.post(url, headers=todo_headers, data=json.dumps(t))
-
     # copy of task for marking as done
     t_done = copy(t)
     t_done["done"] = True
 
-    # copy of task for setting a reminder
-    t_remind = copy(t)
-    t_remind["reminders"] = [] if t_remind["reminders"] is None else t_remind["reminders"]
-    reminder_date = (datetime.now() + timedelta(hours=22)).strftime(vikunja_date_frmt)  # 22 hours from now
-    t_remind["reminders"].append(reminder_date)
-
-    # filter by project here if you have multiple users
+    # filter buckes
     if t["bucket_id"] == 1:
-        topic = "chores"
+        topic = "our-tasks"
     elif t["bucket_id"] == 2:
         topic = "my-tasks"
     else:
-        topic = "other-tasks"
+        topic = "test"
 
     # ntfy notification with two actions back to vikunja
     requests.post(ntfy_url, 
@@ -118,17 +107,10 @@ for t in reminder_tasks + overdue_tasks + upcoming_tasks:
                         "body": json.dumps(t_done)
                         },
                         {
-                        "action": "http",
-                        "label": "Tomorrow",
-                        "url": url,
-                        "method": "POST",
-                        "headers": todo_headers,
-                        "body": json.dumps(t_remind)
-                        },
-                        {
                         "action": "view",
                         "label": "Open Tasks",
                         "url": "https://todo.your.url.here",
                         }]
                     })
                 )
+
