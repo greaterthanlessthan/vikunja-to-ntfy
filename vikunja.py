@@ -26,7 +26,7 @@ args = parser.parse_args()
 vikunja_date_frmt = r'%Y-%m-%dT%H:%M:%SZ'
 
 todo_url = "https://todo.your.url.here/api/v1/tasks/"
-todo_jwt_key = "asuperlongstring"  # JWT token for Vikunja session. Easiest way to set this up is to set "long" session to several years, log in with a browser with "remember me", then use a JWT debugger to get that session token
+todo_jwt_key = "asuperlongstring"  # JWT token/api key that can be obtained from Vikunja as of v0.22
 todo_headers = {'Authorization': f'Bearer {todo_jwt_key}', 'Content-Type': 'application/json'}
 
 ntfy_url = "https://notify.your.url.here/" # ntfy server url
@@ -56,7 +56,7 @@ for t in tasks:
 
     # tasks with recent past reminders
     # we are just assuming the cronjob succeeds
-    if True in [datetime.now() > d and (datetime.now() - timedelta(minutes=25) < d) for d in reminders]:
+    if True in [datetime.now() > d and (datetime.now() - timedelta(minutes=13) < d) for d in reminders]:
         reminder_tasks.append(t)
     # future reminder exists or just checking reminders right now
     elif True in [datetime.now() < d for d in reminders] or args.just_reminders:
@@ -82,11 +82,11 @@ for t in reminder_tasks + overdue_tasks + upcoming_tasks:
     t_done = copy(t)
     t_done["done"] = True
 
-    # filter buckes
+    # select different ntfy topics
     if t["bucket_id"] == 1:
-        topic = "our-tasks"
+        topic = "chores"
     elif t["bucket_id"] == 2:
-        topic = "my-tasks"
+        topic = "projects"
     else:
         topic = "test"
 
